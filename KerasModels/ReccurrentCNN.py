@@ -2,6 +2,10 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.utils import plot_model
 
+from ..DataHandling import DataGenerator
+
+DataGenerator.dataset_creator()
+
 num_stocks = 500
 minutes_in_trading_day = 60*6.5
 sequence_minutes = 30
