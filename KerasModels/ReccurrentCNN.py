@@ -2,9 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.utils import plot_model
 
-from ..DataHandling import DataGenerator
-
-DataGenerator.dataset_creator()
+#from ..DataHandling import DataGenerator
 
 num_stocks = 500
 minutes_in_trading_day = 60*6.5
@@ -12,10 +10,10 @@ sequence_minutes = 30
 features = 5+1  # open, high, low, close, time
 input_vector_size = num_stocks*features # the size of the flattened input data
 
-SandP_input = tf.keras.layers.Input(shape=(sequence_minutes, input_vector_size), name='SandP_input')
+SandP_input = tf.keras.layers.Input(shape=(sequence_minutes, features), name='SandP_input')
 
 lstm_1 = tf.keras.layers.LSTM(units=sequence_minutes, name='lstm')
-dense_2 = tf.keras.layers.Dense(units=1, activation='relu', name='output')
+dense_2 = tf.keras.layers.Dense(units=5, activation='relu', name='output')
 
 net = lstm_1(SandP_input)
 out = dense_2(net)
