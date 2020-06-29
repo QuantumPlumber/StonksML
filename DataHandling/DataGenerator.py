@@ -175,7 +175,7 @@ def dataset_creator(filedirectory='D:/StockData/',
     for direntry in os.scandir(filedirectory):
         if skip < 20:
             skip += 1
-            print(skip)
+            #print(skip)
             continue
 
         if direntry.is_dir():
@@ -198,9 +198,10 @@ def dataset_creator(filedirectory='D:/StockData/',
             if time_data.shape[0] == 0:
                 continue
 
+
             mid_day = arrow.get(time_data[time_data.shape[0] // 2] * 1e-3).to('America/New_York')
             date = mid_day.date()
-            #print(date)
+            print(date)
 
             if arrow.get(time_data[time_data.shape[0] // 2] * 1e-3).isoweekday() not in [1, 2, 3, 4, 5]:
                 # print('not a weekday')
@@ -215,14 +216,14 @@ def dataset_creator(filedirectory='D:/StockData/',
             continue
 
         for ticker in tickers:
-            #print(ticker)
+            # print(ticker)
             if ticker is not 'SPY':
                 time_data = datafile[ticker]['datetime'][...]
                 if time_data.shape[0] == 0:
                     continue
 
                 if time_data[0] < 1:
-                    #print('no data for {}'.format(ticker))
+                    # print('no data for {}'.format(ticker))
                     continue
 
                 if arrow.get(time_data[time_data.shape[0] // 2] * 1e-3).isoweekday() not in [1, 2, 3, 4, 5]:
@@ -230,7 +231,7 @@ def dataset_creator(filedirectory='D:/StockData/',
                     continue
 
                 seq_starts = np.random.choice(np.arange(time_data.shape[0] - tot_seq_len), size=num_seq_per_day)
-                #print(seq_starts)
+                # print(seq_starts)
 
                 dummy_seq = np.zeros(shape=total_seq_shape)
                 for start in seq_starts:
@@ -242,14 +243,14 @@ def dataset_creator(filedirectory='D:/StockData/',
                     dummy_seq[0, :, 5] = trading_minute(datafile[ticker]['datetime'][start:start + tot_seq_len])
 
                     # shift and scale according to the train data
-                    # avg = np.sum(dummy_seq[0, :, 0:4], axis=1, keepdims=True) / tot_seq_len
-                    # std_dev = ((dummy_seq[0, :, 0:4] - avg) ** 2 / tot_seq_len) ** .5
-                    # dummy_seq[0, :, 0:4] = (dummy_seq[0, :, 0:4] - avg) / std_dev
+                    avg = np.sum(dummy_seq[0, :, 0:5], axis=1, keepdims=True) / tot_seq_len
+                    std_dev = (np.sum((dummy_seq[0, :, 0:5] - avg) ** 2, axis=1, keepdims=True) / tot_seq_len) ** .5
+                    dummy_seq[0, :, 0:5] = (dummy_seq[0, :, 0:5] - avg) / std_dev
 
                     train_sequences = np.concatenate((train_sequences, dummy_seq[:, 0:train_seq_len, :]), axis=0)
                     pred_sequences = np.concatenate((pred_sequences, dummy_seq[:, train_seq_len:, :]), axis=0)
 
-                    num_seq_recorded += num_seq_per_day
+                    num_seq_recorded += 1
 
                     if num_seq_recorded >= num_tot_seq:
                         return (train_sequences[1:], pred_sequences[1:])
@@ -264,5 +265,5 @@ if __name__ == '''__main__''':
 
     print(train_dataset.shape)
     print(predict_dataset.shape)
-    #print(np.max(train_dataset[1, :, :], axis=1))
-    #print(train_dataset[50, :, :])
+    # print(np.max(train_dataset[1, :, :], axis=1))
+    # print(train_dataset[50, :, :])
