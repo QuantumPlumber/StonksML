@@ -153,31 +153,20 @@ def trading_minute(t):
     return np.array(trading_minute) / total_minutes
 
 
-def dataset_creator(filedirectory='D:/StockData/',
-                    num_tot_seq=1000,
-                    num_seq_per_day=10,
-                    train_seq_len=30,
-                    pred_seq_len=5):
+def daily_sequence_generator(filedirectory='D:/StockData/',
+                             num_seq_per_day=10,
+                             train_seq_len=30,
+                             pred_seq_len=5):
     tot_seq_len = train_seq_len + pred_seq_len
-    total_seq_shape = (1, tot_seq_len, 6)  # open, high, low, close, vol, datetime
+    total_seq_shape = (tot_seq_len, 6)  # open, high, low, close, vol, datetime
 
-    train_seq_shape = (1, train_seq_len, 6)  # open, high, low, close, vol, datetime
-    train_sequences = np.empty(shape=train_seq_shape)
-
-    pred_seq_shape = (1, pred_seq_len, 6)  # open, high, low, close, vol, datetime
-    pred_sequences = np.empty(shape=pred_seq_shape)
+    train_seq_shape = (num_seq_per_day, train_seq_len, 6)  # open, high, low, close, vol, datetime
+    pred_seq_shape = (num_seq_per_day, pred_seq_len, 6)  # open, high, low, close, vol, datetime
 
     unique_dates = []
     file_is_new = False
 
-    num_seq_recorded = 0
-    skip = 0
     for direntry in os.scandir(filedirectory):
-        if skip < 20:
-            skip += 1
-            #print(skip)
-            continue
-
         if direntry.is_dir():
             continue
 
@@ -196,8 +185,7 @@ def dataset_creator(filedirectory='D:/StockData/',
         for ticker in tickers:
             time_data = datafile[ticker]['datetime'][...]
             if time_data.shape[0] == 0:
-                continue
-
+                break
 
             mid_day = arrow.get(time_data[time_data.shape[0] // 2] * 1e-3).to('America/New_York')
             date = mid_day.date()
@@ -218,7 +206,16 @@ def dataset_creator(filedirectory='D:/StockData/',
         for ticker in tickers:
             # print(ticker)
             if ticker is not 'SPY':
-                time_data = datafile[ticker]['datetime'][...]
+                try:
+                    open_data = datafile[ticker]['open'][...]
+                    high_data = datafile[ticker]['high'][...]
+                    low_data = datafile[ticker]['low'][...]
+                    close_data = datafile[ticker]['close'][...]
+                    volum_data = datafile[ticker]['volume'][...]
+                    time_data = datafile[ticker]['datetime'][...]
+                except:
+                    continue
+
                 if time_data.shape[0] == 0:
                     continue
 
@@ -233,27 +230,84 @@ def dataset_creator(filedirectory='D:/StockData/',
                 seq_starts = np.random.choice(np.arange(time_data.shape[0] - tot_seq_len), size=num_seq_per_day)
                 # print(seq_starts)
 
+                train_sequences = np.zeros(shape=train_seq_shape)
+                pred_sequences = np.zeros(shape=pred_seq_shape)
                 dummy_seq = np.zeros(shape=total_seq_shape)
-                for start in seq_starts:
-                    dummy_seq[0, :, 0] = datafile[ticker]['open'][start:start + tot_seq_len]
-                    dummy_seq[0, :, 1] = datafile[ticker]['high'][start:start + tot_seq_len]
-                    dummy_seq[0, :, 2] = datafile[ticker]['low'][start:start + tot_seq_len]
-                    dummy_seq[0, :, 3] = datafile[ticker]['close'][start:start + tot_seq_len]
-                    dummy_seq[0, :, 4] = datafile[ticker]['volume'][start:start + tot_seq_len]
-                    dummy_seq[0, :, 5] = trading_minute(datafile[ticker]['datetime'][start:start + tot_seq_len])
+                for i, start in enumerate(seq_starts):
+                    dummy_seq[:, 0] = open_data[start:start + tot_seq_len]
+                    dummy_seq[:, 1] = high_data[start:start + tot_seq_len]
+                    dummy_seq[:, 2] = low_data[start:start + tot_seq_len]
+                    dummy_seq[:, 3] = close_data[start:start + tot_seq_len]
+                    dummy_seq[:, 4] = volum_data[start:start + tot_seq_len]
+                    dummy_seq[:, 5] = trading_minute(time_data[start:start + tot_seq_len])
 
                     # shift and scale according to the train data
-                    avg = np.sum(dummy_seq[0, :, 0:5], axis=1, keepdims=True) / tot_seq_len
-                    std_dev = (np.sum((dummy_seq[0, :, 0:5] - avg) ** 2, axis=1, keepdims=True) / tot_seq_len) ** .5
-                    dummy_seq[0, :, 0:5] = (dummy_seq[0, :, 0:5] - avg) / std_dev
+                    avg = np.sum(dummy_seq[:, 0:5], axis=0, keepdims=True) / tot_seq_len
+                    std_dev = (np.sum((dummy_seq[:, 0:5] - avg) ** 2, axis=0, keepdims=True) / tot_seq_len) ** .5
+                    dummy_seq[:, 0:5] = (dummy_seq[:, 0:5] - avg) / std_dev
 
-                    train_sequences = np.concatenate((train_sequences, dummy_seq[:, 0:train_seq_len, :]), axis=0)
-                    pred_sequences = np.concatenate((pred_sequences, dummy_seq[:, train_seq_len:, :]), axis=0)
+                    train_sequences[i, :, :] = dummy_seq[0:train_seq_len, :]
+                    pred_sequences[i, :, :] = dummy_seq[train_seq_len:, :]
 
-                    num_seq_recorded += 1
+            yield train_sequences, pred_sequences
 
-                    if num_seq_recorded >= num_tot_seq:
-                        return (train_sequences[1:], pred_sequences[1:])
+        datafile.close()
+
+
+def dataset_creator(filedirectory='D:/StockData/',
+                    num_tot_seq=1000,
+                    num_seq_per_day=10,
+                    train_seq_len=30,
+                    pred_seq_len=5):
+    seq_gen = daily_sequence_generator(filedirectory=filedirectory,
+                                       num_seq_per_day=num_seq_per_day,
+                                       train_seq_len=train_seq_len,
+                                       pred_seq_len=pred_seq_len)
+    train_list = []
+    predict_list = []
+    for i in np.arange(num_tot_seq // num_seq_per_day):
+        train_train, pred_pred = next(seq_gen)
+
+        train_list.append(train_train)
+        predict_list.append(pred_pred)
+
+    train_output = np.stack(train_list, axis=0)
+    predict_output = np.stack(predict_list, axis=0)
+
+    return train_output, predict_output
+
+
+def datafile_creator(output_file_name='datafile.hdf5',
+                     filedirectory='D:/StockData/',
+                     num_tot_seq=1000,
+                     num_seq_per_day=10,
+                     train_seq_len=30,
+                     pred_seq_len=5):
+    datafile = h5py.File('./' + output_file_name)
+
+    total_sequences = num_tot_seq // num_seq_per_day * num_seq_per_day  # must be divisible
+    train_shape = (total_sequences, train_seq_len, 6)
+    train_hdf5 = datafile.create_dataset(name='train_sequences', shape=train_shape)
+    predict_shape = (total_sequences, pred_seq_len, 6)
+    pred_hdf5 = datafile.create_dataset(name='pred_sequences', shape=predict_shape)
+
+    seq_gen = daily_sequence_generator(filedirectory=filedirectory,
+                                       num_seq_per_day=num_seq_per_day,
+                                       train_seq_len=train_seq_len,
+                                       pred_seq_len=pred_seq_len)
+    train_list = []
+    predict_list = []
+    i = 0
+    for train_train, predict_predict in next(seq_gen):
+        cut_bot = i * num_seq_per_day
+        cut_top = (i + 1) * num_seq_per_day
+
+        train_hdf5[cut_bot:cut_top, ...] = train_train
+        pred_hdf5[cut_bot:cut_top, ...] = predict_predict
+
+        i += 1
+
+    datafile.close()
 
 
 if __name__ == '''__main__''':

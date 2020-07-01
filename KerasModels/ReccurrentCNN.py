@@ -12,11 +12,16 @@ input_vector_size = num_stocks * features  # the size of the flattened input dat
 
 SandP_input = tf.keras.layers.Input(shape=(sequence_minutes, features), name='SandP_input')
 
-lstm_1 = tf.keras.layers.LSTM(units=5*sequence_minutes, name='lstm')
+lstm_width = 100
+lstm_1 = tf.keras.layers.LSTM(units=lstm_width, return_sequences=True, name='lstm_1')
+lstm_2 = tf.keras.layers.LSTM(units=lstm_width, return_sequences=True, name='lstm_2')
+lstm_3 = tf.keras.layers.LSTM(units=lstm_width, return_sequences=False, name='lstm_3')
 dense_2 = tf.keras.layers.Dense(units=30, activation='relu', name='dense')
 reshape_1 = tf.keras.layers.Reshape((5, 6), name='output')
 
 net = lstm_1(SandP_input)
+net = lstm_2(net)
+net = lstm_3(net)
 net = dense_2(net)
 out = reshape_1(net)
 
@@ -38,3 +43,5 @@ filename = direct + '/' + 'model.json'
 f = open(filename, 'w')
 f.write(keras_model.to_json())
 f.close()
+
+keras_model.summary()
