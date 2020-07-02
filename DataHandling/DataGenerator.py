@@ -249,6 +249,9 @@ def daily_sequence_generator(filedirectory='D:/StockData/',
                     train_sequences[i, :, :] = dummy_seq[0:train_seq_len, :]
                     pred_sequences[i, :, :] = dummy_seq[train_seq_len:, :]
 
+                train_sequences[np.isnan(train_sequences)] = 0 # get rid of nan
+                pred_sequences[np.isnan(pred_sequences)] = 0
+
             yield train_sequences, pred_sequences
 
         datafile.close()
@@ -285,7 +288,8 @@ def datafile_creator(output_file_name='datafile.hdf5',
                      pred_seq_len=5):
     datafile = h5py.File('./' + output_file_name)
 
-    total_sequences = num_tot_seq // num_seq_per_day * num_seq_per_day  # must be divisible
+    total_sequences = (num_tot_seq // num_seq_per_day) * num_seq_per_day  # must be divisible
+    print('total sequences to be generated: {}'.format(total_sequences))
     train_shape = (total_sequences, train_seq_len, 6)
     train_hdf5 = datafile.create_dataset(name='train_sequences', shape=train_shape)
     predict_shape = (total_sequences, pred_seq_len, 6)
@@ -298,14 +302,25 @@ def datafile_creator(output_file_name='datafile.hdf5',
     train_list = []
     predict_list = []
     i = 0
-    for train_train, predict_predict in next(seq_gen):
+    for train_train, predict_predict in seq_gen:
         cut_bot = i * num_seq_per_day
         cut_top = (i + 1) * num_seq_per_day
+
+        if cut_top >= total_sequences:
+            break
 
         train_hdf5[cut_bot:cut_top, ...] = train_train
         pred_hdf5[cut_bot:cut_top, ...] = predict_predict
 
         i += 1
+
+        #print(i)
+        #print((cut_bot, cut_top))
+
+    train_hdf5.attrs['total_entries'] = np.array(cut_top)
+    train_hdf5.attrs['total_days'] = np.array(i)
+    pred_hdf5.attrs['total_entries'] = np.array(cut_top)
+    pred_hdf5.attrs['total_days'] = np.array(i)
 
     datafile.close()
 
