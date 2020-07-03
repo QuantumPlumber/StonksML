@@ -7,7 +7,8 @@ from tensorflow.keras.utils import plot_model
 num_stocks = 500
 minutes_in_trading_day = 60 * 6.5
 sequence_minutes = 30
-prediction_minutes = 30
+prediction_minutes = 1
+print(prediction_minutes)
 features = 4  # open, high, low, close, volume, time
 input_vector_size = num_stocks * features  # the size of the flattened input data
 
@@ -17,7 +18,7 @@ net = tf.keras.layers.Flatten(name='flatten_input')(SandP_input)
 
 num_nets = 8
 for i in np.arange(num_nets):
-    net = tf.keras.layers.Dense(units=(num_nets + 1 - i) * 1 * prediction_minutes * features, activation='tanh',
+    net = tf.keras.layers.Dense(units=(num_nets + 1 - i) * 30 * prediction_minutes * features, activation='tanh',
                                 name='dense_{}'.format(i))(net)
 
 net = tf.keras.layers.Dense(units=prediction_minutes * features, activation=None, name='dense_out')(net)

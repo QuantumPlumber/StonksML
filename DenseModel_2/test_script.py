@@ -18,7 +18,7 @@ print(train_cut)
 train_index = int(train_cut * num_sequences)
 
 train_data = datafile['train_sequences'][train_index:, :, 0:4]
-predict_data = datafile['pred_sequences'][train_index:, :, 0:4]
+predict_data = datafile['pred_sequences'][train_index:, 0:1, 0:4]
 
 train_shape = train_data.shape
 print(train_data.shape)

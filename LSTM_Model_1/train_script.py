@@ -3,17 +3,17 @@ import numpy as np
 #from KerasModels import ReccurrentCNN as ModelFile
 import LSTM_Model_1.ModelScript as ModelFile
 
-#filename = './DataHandling/datafile2.hdf5'
-filename = './DataHandling/datafile_long.hdf5'
+#filename = '../DataHandling/datafile2.hdf5'
+filename = '../DataHandling/datafile_long_rescale.hdf5'
 datafile = h5py.File(filename, 'r')
 
 num_sequences = datafile['train_sequences'].shape[0]
 train_cut = .8
 train_index = int(train_cut*num_sequences)
 
-train_data = datafile['train_sequences'][0:train_index, ...]
+train_data = datafile['train_sequences'][0:train_index, :, 0:4]
 train_data[np.isnan(train_data)] = 0
-predict_data = datafile['pred_sequences'][0:train_index, ...]
+predict_data = datafile['pred_sequences'][0:train_index, :, 0:4]
 predict_data[np.isnan(predict_data)] = 0
 
 print(train_data.shape)

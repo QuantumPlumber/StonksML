@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 filename = './datafile2.hdf5'
-filename = './datafile_long.hdf5'
+filename = './datafile_long_rescale_2std.hdf5'
 datafile = h5py.File(filename, 'r')
 
 for key in datafile.keys():
@@ -26,7 +26,7 @@ nan_indices = np.isnan(all_train_data)
 print(np.sum(nan_indices))
 
 while True:
-    seq_choices = np.random.choice(np.arange(start=int(.8*entries), stop=int(entries)), size=plot_number)
+    seq_choices = np.random.choice(np.arange(start=int(.0*entries), stop=int(entries)), size=plot_number)
     print(seq_choices)
 
     for i, seq in enumerate(seq_choices):
@@ -36,7 +36,8 @@ while True:
             axes[i, col].plot(plotter)
 
     plt.show()
-    signal = input('press n for a new plot \n press any other key to exit..')
+    #signal = input('press n for a new plot \n press any other key to exit..')
 
-    if signal != 'n':
-        break
+    #if signal != 'n':
+    #    break
+    break

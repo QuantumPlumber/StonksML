@@ -242,14 +242,18 @@ def daily_sequence_generator(filedirectory='D:/StockData/',
                     dummy_seq[:, 5] = trading_minute(time_data[start:start + tot_seq_len])
 
                     # shift and scale according to the train data
-                    avg = np.sum(dummy_seq[:, 0:5], axis=0, keepdims=True) / tot_seq_len
-                    std_dev = (np.sum((dummy_seq[:, 0:5] - avg) ** 2, axis=0, keepdims=True) / tot_seq_len) ** .5
-                    dummy_seq[:, 0:5] = (dummy_seq[:, 0:5] - avg) / std_dev
+                    # avg = np.sum(dummy_seq[:, 0:5], axis=0, keepdims=True) / tot_seq_len
+                    avg = np.sum(dummy_seq[0:train_seq_len, 0:4]) / (train_seq_len * 4)
+                    # std_dev = (np.sum((dummy_seq[:, 0:5] - avg) ** 2, axis=0, keepdims=True) / tot_seq_len) ** .5
+                    std_dev = (np.sum((dummy_seq[0:train_seq_len, 0:4] - avg) ** 2) / (
+                                train_seq_len * 4)) ** .5
+                    # dummy_seq[:, 0:5] = (dummy_seq[:, 0:5] - avg) / std_dev
+                    dummy_seq[:, 0:4] = (dummy_seq[:, 0:4] - avg) / (2*std_dev)
 
                     train_sequences[i, :, :] = dummy_seq[0:train_seq_len, :]
                     pred_sequences[i, :, :] = dummy_seq[train_seq_len:, :]
 
-                train_sequences[np.isnan(train_sequences)] = 0 # get rid of nan
+                train_sequences[np.isnan(train_sequences)] = 0  # get rid of nan
                 pred_sequences[np.isnan(pred_sequences)] = 0
 
             yield train_sequences, pred_sequences
@@ -314,8 +318,8 @@ def datafile_creator(output_file_name='datafile.hdf5',
 
         i += 1
 
-        #print(i)
-        #print((cut_bot, cut_top))
+        # print(i)
+        # print((cut_bot, cut_top))
 
     train_hdf5.attrs['total_entries'] = np.array(cut_top)
     train_hdf5.attrs['total_days'] = np.array(i)
