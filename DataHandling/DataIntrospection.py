@@ -4,6 +4,7 @@ import numpy as np
 
 filename = './datafile2.hdf5'
 filename = './datafile_long_rescale_2std.hdf5'
+filename = './datafile_volume_scale.hdf5'
 datafile = h5py.File(filename, 'r')
 
 for key in datafile.keys():
@@ -22,8 +23,12 @@ plot_number = 10
 fig, axes = plt.subplots(nrows=plot_number, ncols=columns, sharex=True)
 
 all_train_data = datafile['train_sequences'][:, :, :]
+
 nan_indices = np.isnan(all_train_data)
-print(np.sum(nan_indices))
+print('number of NaN indices: {}'.format(np.sum(nan_indices)))
+
+inf_indices = np.isinf(all_train_data)
+print('number of inf indices: {}'.format(np.sum(inf_indices)))
 
 while True:
     seq_choices = np.random.choice(np.arange(start=int(.0*entries), stop=int(entries)), size=plot_number)

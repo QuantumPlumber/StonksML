@@ -242,13 +242,17 @@ def daily_sequence_generator(filedirectory='D:/StockData/',
                     dummy_seq[:, 5] = trading_minute(time_data[start:start + tot_seq_len])
 
                     # shift and scale according to the train data
-                    # avg = np.sum(dummy_seq[:, 0:5], axis=0, keepdims=True) / tot_seq_len
+                    '''
                     avg = np.sum(dummy_seq[0:train_seq_len, 0:4]) / (train_seq_len * 4)
-                    # std_dev = (np.sum((dummy_seq[:, 0:5] - avg) ** 2, axis=0, keepdims=True) / tot_seq_len) ** .5
                     std_dev = (np.sum((dummy_seq[0:train_seq_len, 0:4] - avg) ** 2) / (
                                 train_seq_len * 4)) ** .5
-                    # dummy_seq[:, 0:5] = (dummy_seq[:, 0:5] - avg) / std_dev
                     dummy_seq[:, 0:4] = (dummy_seq[:, 0:4] - avg) / (2*std_dev)
+                    '''
+
+                    avg = np.sum(dummy_seq[0:train_seq_len, 0:5], axis=0, keepdims=True) / train_seq_len
+                    std_dev = (np.sum((dummy_seq[0:train_seq_len, 0:5] - avg) ** 2, axis=0,
+                                      keepdims=True) / train_seq_len) ** .5
+                    dummy_seq[:, 0:5] = (dummy_seq[:, 0:5] - avg) / std_dev
 
                     train_sequences[i, :, :] = dummy_seq[0:train_seq_len, :]
                     pred_sequences[i, :, :] = dummy_seq[train_seq_len:, :]

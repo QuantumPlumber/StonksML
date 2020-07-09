@@ -9,6 +9,7 @@ model = tf.keras.models.load_model(model_file)
 model.summary()
 
 filename = '../DataHandling/datafile_long_rescale_2std.hdf5'
+filename = '../DataHandling/datafile_volume_scale.hdf5'
 datafile = h5py.File(filename, 'r')
 
 num_sequences = datafile['train_sequences'].shape[0]
@@ -17,7 +18,7 @@ train_cut = .8
 print(train_cut)
 train_index = int(train_cut * num_sequences)
 
-train_data = datafile['train_sequences'][train_index:, :, 0:4]
+train_data = datafile['train_sequences'][train_index:, :, [0, 1, 2, 3, 5]]
 predict_data = datafile['pred_sequences'][train_index:, :, 0:4]
 
 train_shape = train_data.shape
@@ -39,15 +40,15 @@ for j in np.arange(ground_truth.shape[1]):
 
     # now replace the last value of the input with the prediction
     dummy_recur_data[:, :-1, :] = dummy_recur_data[:, 1:, :]
-    dummy_recur_data[:, -1:, :] = recurrent_predictions[:, j:j+1, :]
+    dummy_recur_data[:, -1:, 0:4] = recurrent_predictions[:, j:j+1, :]
 
     predictions[:, j:j+1, :] = model.predict(dummy_data)
 
     # now replace the last value of the input with the prediction
     dummy_data[:, :-1, :] = dummy_data[:, 1:, :]
-    dummy_data[:, -1:, :] = ground_truth[:, j:j+1, :]
+    dummy_data[:, -1:, 0:4] = ground_truth[:, j:j+1, :]
 
-columns = train_shape[-1]
+columns = ground_truth.shape[-1]
 fig, axes = plt.subplots(nrows=sequences_to_predict, ncols=columns, sharex=True)
 print(axes.shape)
 

@@ -9,7 +9,8 @@ minutes_in_trading_day = 60 * 6.5
 sequence_minutes = 30
 prediction_minutes = 1
 print(prediction_minutes)
-features = 4  # open, high, low, close, volume, time
+features = 1  # open, high, low, close, volume, time
+predictions = 1  # open, high, low, close,
 input_vector_size = num_stocks * features  # the size of the flattened input data
 
 SandP_input = tf.keras.layers.Input(shape=(sequence_minutes, features), name='SandP_input')
@@ -21,8 +22,8 @@ for i in np.arange(num_nets):
     net = tf.keras.layers.Dense(units=(num_nets + 1 - i) * 30 * prediction_minutes * features, activation='tanh',
                                 name='dense_{}'.format(i))(net)
 
-net = tf.keras.layers.Dense(units=prediction_minutes * features, activation=None, name='dense_out')(net)
-out = tf.keras.layers.Reshape((prediction_minutes, features), name='output')(net)
+net = tf.keras.layers.Dense(units=prediction_minutes * predictions, activation=None, name='dense_out')(net)
+out = tf.keras.layers.Reshape((prediction_minutes, predictions), name='output')(net)
 
 sgd = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.0, nesterov=False, name="SGD")
 # RMSprop = tf.keras.optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
