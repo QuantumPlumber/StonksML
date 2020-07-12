@@ -1,6 +1,6 @@
 import h5py
 import numpy as np
-import DenseModel_2.DenseModel as ModelFile
+import DenseProbabilityModel.DenseModel as ModelFile
 
 # filename = './DataHandling/datafile2.hdf5'
 filename = '../DataHandling/datafile_long_rescale_2std.hdf5'
@@ -14,7 +14,6 @@ train_index = int(train_cut * num_sequences)
 
 #
 train_data = np.sum(datafile['train_sequences'][0:train_index, :, [0, 1, 2, 3]], axis=2, keepdims=True) / 4
-#train_data = datafile['train_sequences'][0:train_index, :, [0, 1, 2, 3]]
 train_data[np.isnan(train_data)] = 0
 train_data[np.isinf(train_data)] = 0
 predict_data = np.sum(datafile['pred_sequences'][0:train_index, 0:1, 0:4], axis=2, keepdims=True) / 4

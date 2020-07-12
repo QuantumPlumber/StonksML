@@ -18,8 +18,8 @@ train_cut = .8
 print(train_cut)
 train_index = int(train_cut * num_sequences)
 
-train_data = np.sum(datafile['train_sequences'][train_index:, :, [0, 1, 2, 3]],axis=2, keepdims=True) / 4
-predict_data = np.sum(datafile['pred_sequences'][train_index:, 0:1, 0:4],axis=2, keepdims=True) / 4
+train_data = np.sum(datafile['train_sequences'][train_index:, :, [0, 1, 2, 3]], axis=2, keepdims=True) / 4
+predict_data = np.sum(datafile['pred_sequences'][train_index:, 0:1, 0:4], axis=2, keepdims=True) / 4
 
 train_shape = train_data.shape
 print(train_data.shape)
